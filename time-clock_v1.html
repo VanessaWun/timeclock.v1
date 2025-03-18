@@ -1,0 +1,2317 @@
+<!DOCTYPE html><html lang="zh-HK"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Management System | 人力資源管理系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/all.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        secondary: '#4F4D8C',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&family=Noto+Sans:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --animate-duration: 0.3s;
+        }
+        
+        body {
+            font-family: 'Noto Sans', 'Noto Sans HK', sans-serif;
+        }
+        
+        .slide-in {
+            animation: slideIn var(--animate-duration) ease forwards;
+        }
+        
+        .slide-out {
+            animation: slideOut var(--animate-duration) ease forwards;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn var(--animate-duration) ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .dark ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #5a5a5a;
+        }
+        
+        /* Calendar styling */
+        .calendar-grid .calendar-day {
+            aspect-ratio: 1/1;
+        }
+        
+        .calendar-grid .calendar-day.today {
+            position: relative;
+            font-weight: bold;
+            z-index: 1;
+        }
+        
+        .calendar-grid .calendar-day.today:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            height: 85%;
+            border-radius: 50%;
+            background-color: rgba(93, 92, 222, 0.1);
+            z-index: -1;
+        }
+        
+        .calendar-grid .calendar-day.other-month {
+            opacity: 0.3;
+        }
+        
+        .shift-marker {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 2px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300">
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm">
+            <div class="container mx-auto px-4 py-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <button id="menu-toggle" class="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="text-xl font-bold text-primary">
+                            <span class="hidden md:inline">HR Management System</span>
+                            <span class="md:hidden">HR System</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div id="sync-status" class="hidden md:flex items-center text-green-500 text-sm">
+                            <i class="fas fa-check-circle mr-1"></i> <span class="synced-text">Synced with Google Sheets</span>
+                        </div>
+                        <button id="language-toggle" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <span id="current-lang">EN</span>
+                        </button>
+                        <div class="relative" id="notification-container">
+                            <button id="notification-bell" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-bell"></i>
+                                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
+                            </button>
+                            <!-- Notification dropdown would go here -->
+                        </div>
+                        <div class="relative" id="user-menu-container">
+                            <button id="user-menu" class="flex items-center space-x-1 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                    <i class="fas fa-user text-gray-500 dark:text-gray-400"></i>
+                                </div>
+                                <span class="hidden md:inline-block admin-name">Admin User</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 hidden z-10">
+                                <a href="#" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-user-circle mr-2"></i> <span class="user-profile">Profile</span>
+                                </a>
+                                <a href="#" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-cog mr-2"></i> <span class="user-settings">Settings</span>
+                                </a>
+                                <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                                <a href="#" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-sign-out-alt mr-2"></i> <span class="user-logout">Logout</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 flex">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="w-64 bg-white dark:bg-gray-800 shadow-sm hidden md:block transition-all duration-300 overflow-y-auto fixed md:sticky top-0 md:top-auto h-full md:h-auto z-20">
+                <div class="p-4">
+                    <div class="mb-6 flex justify-center">
+                        <div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">
+                            HR
+                        </div>
+                    </div>
+                    <nav>
+                        <ul class="space-y-1">
+                            <li>
+                                <button data-page="dashboard" class="nav-link w-full flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-100 dark:bg-gray-700 text-primary">
+                                    <i class="fas fa-th-large w-5 text-center"></i>
+                                    <span class="dashboard-text">Dashboard</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button data-page="attendance" class="nav-link w-full flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-fingerprint w-5 text-center"></i>
+                                    <span class="attendance-text">Attendance</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button data-page="leave" class="nav-link w-full flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-calendar-alt w-5 text-center"></i>
+                                    <span class="leave-text">Leave Management</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button data-page="scheduling" class="nav-link w-full flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-calendar-week w-5 text-center"></i>
+                                    <span class="scheduling-text">Scheduling</span>
+                                </button>
+                            </li>
+                            <li class="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                                <button data-page="admin" class="nav-link w-full flex items-center justify-between p-3 rounded-lg transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-user-shield w-5 text-center"></i>
+                                        <span class="admin-text">Admin Panel</span>
+                                    </div>
+                                    <span class="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">5</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button data-page="reports" class="nav-link w-full flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-chart-bar w-5 text-center"></i>
+                                    <span class="reports-text">Reports</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button data-page="integrations" class="nav-link w-full flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-plug w-5 text-center"></i>
+                                    <span class="integrations-text">Integrations</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Mobile Sidebar Overlay -->
+            <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-10 hidden md:hidden"></div>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-4 md:p-6 overflow-x-hidden">
+                <div id="content-container" class="container mx-auto">
+                    <!-- Dashboard Page -->
+                    <div id="dashboard-page" class="page active">
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-2xl font-bold dashboard-title">Dashboard</h1>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                <span id="current-date"></span>
+                            </div>
+                        </div>
+
+                        <!-- Status Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-sm text-gray-500 dark:text-gray-400 employees-text">Employees</h3>
+                                        <p class="text-2xl font-bold">48</p>
+                                    </div>
+                                    <div class="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                                        <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
+                                    </div>
+                                </div>
+                                <div class="flex items-center mt-2 text-sm">
+                                    <span class="text-green-500 mr-1"><i class="fas fa-arrow-up"></i> 3</span>
+                                    <span class="text-gray-500 dark:text-gray-400 since-last-month-text">since last month</span>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-sm text-gray-500 dark:text-gray-400 attendance-rate-text">Attendance Rate</h3>
+                                        <p class="text-2xl font-bold">94.2%</p>
+                                    </div>
+                                    <div class="bg-green-100 dark:bg-green-900 p-2 rounded-lg">
+                                        <i class="fas fa-user-check text-green-600 dark:text-green-400"></i>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+                                    <div class="bg-green-500 h-1.5 rounded-full" style="width: 94.2%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-sm text-gray-500 dark:text-gray-400 pending-requests-text">Pending Requests</h3>
+                                        <p class="text-2xl font-bold">5</p>
+                                    </div>
+                                    <div class="bg-yellow-100 dark:bg-yellow-900 p-2 rounded-lg">
+                                        <i class="fas fa-clock text-yellow-600 dark:text-yellow-400"></i>
+                                    </div>
+                                </div>
+                                <div class="flex items-center mt-2 text-sm">
+                                    <span class="text-red-500 mr-1"><i class="fas fa-arrow-up"></i> 2</span>
+                                    <span class="text-gray-500 dark:text-gray-400 since-yesterday-text">since yesterday</span>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-sm text-gray-500 dark:text-gray-400 overtime-hours-text">Overtime Hours</h3>
+                                        <p class="text-2xl font-bold">126</p>
+                                    </div>
+                                    <div class="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
+                                        <i class="fas fa-hourglass-half text-purple-600 dark:text-purple-400"></i>
+                                    </div>
+                                </div>
+                                <div class="flex items-center mt-2 text-sm">
+                                    <span class="text-green-500 mr-1"><i class="fas fa-arrow-down"></i> 5%</span>
+                                    <span class="text-gray-500 dark:text-gray-400 since-last-month-text">since last month</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attendance Chart -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div class="md:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-lg font-medium attendance-overview-text">Attendance Overview</h3>
+                                    <select class="bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-sm py-1 px-3">
+                                        <option value="week" class="this-week-text">This Week</option>
+                                        <option value="month" class="this-month-text">This Month</option>
+                                        <option value="quarter" class="this-quarter-text">This Quarter</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <canvas id="attendanceChart" height="250"></canvas>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                                <h3 class="text-lg font-medium mb-6 leave-distribution-text">Leave Distribution</h3>
+                                <div>
+                                    <canvas id="leaveChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Approvals -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium pending-approvals-text">Pending Approvals</h3>
+                                <a href="#" class="text-primary hover:text-secondary text-sm view-all-text">View All</a>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                            <th class="pb-3 request-type-text">Request Type</th>
+                                            <th class="pb-3 employee-text">Employee</th>
+                                            <th class="pb-3 date-text">Date</th>
+                                            <th class="pb-3 status-text">Status</th>
+                                            <th class="pb-3 actions-text">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+                                                        <i class="fas fa-calendar-alt"></i>
+                                                    </div>
+                                                    <span class="leave-request-text">Leave Request</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 text-sm">Sarah Chen</td>
+                                            <td class="py-3 text-sm">May 22 - May 24, 2023</td>
+                                            <td class="py-3 text-sm">
+                                                <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded-full text-xs pending-text">
+                                                    Pending
+                                                </span>
+                                            </td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex space-x-2">
+                                                    <button class="p-1 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400 mr-3">
+                                                        <i class="fas fa-exchange-alt"></i>
+                                                    </div>
+                                                    <span class="shift-swap-text">Shift Swap</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 text-sm">Michael Li</td>
+                                            <td class="py-3 text-sm">May 19, 2023</td>
+                                            <td class="py-3 text-sm">
+                                                <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded-full text-xs pending-text">
+                                                    Pending
+                                                </span>
+                                            </td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex space-x-2">
+                                                    <button class="p-1 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400 mr-3">
+                                                        <i class="fas fa-clock"></i>
+                                                    </div>
+                                                    <span class="overtime-request-text">Overtime Request</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 text-sm">John Wong</td>
+                                            <td class="py-3 text-sm">May 18, 2023</td>
+                                            <td class="py-3 text-sm">
+                                                <span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded-full text-xs pending-text">
+                                                    Pending
+                                                </span>
+                                            </td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex space-x-2">
+                                                    <button class="p-1 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Google Sheets Sync Status -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-medium mb-2 data-integration-text">Data Integration</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 sheets-sync-status-text">Google Sheets synchronization is active and working correctly.</p>
+                                    
+                                    <div class="flex items-center space-x-4">
+                                        <div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 mb-1 last-sync-text">Last Sync</div>
+                                            <div class="font-medium">Today, 10:32 AM</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 mb-1 sync-records-text">Records Synced</div>
+                                            <div class="font-medium">1,254</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 mb-1 sync-status-text">Status</div>
+                                            <div class="font-medium text-green-500"><i class="fas fa-check-circle mr-1"></i> <span class="active-text">Active</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex">
+                                    <button class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg text-sm mr-2 sync-now-text">
+                                        Sync Now
+                                    </button>
+                                    <button class="bg-primary hover:bg-secondary text-white py-2 px-4 rounded-lg text-sm view-data-text">
+                                        View Data
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Panel Page -->
+                    <div id="admin-page" class="page hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-2xl font-bold admin-panel-text">Admin Panel</h1>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                <span id="admin-date"></span>
+                            </div>
+                        </div>
+
+                        <!-- Admin Tabs -->
+                        <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+                            <ul class="flex flex-wrap -mb-px">
+                                <li class="mr-2">
+                                    <button class="admin-tab inline-block py-2 px-4 border-b-2 border-primary text-primary" data-target="approval-panel">
+                                        <i class="fas fa-check-circle mr-2"></i> <span class="approvals-text">Approvals</span>
+                                        <span class="ml-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 inline-flex items-center justify-center">5</span>
+                                    </button>
+                                </li>
+                                <li class="mr-2">
+                                    <button class="admin-tab inline-block py-2 px-4 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 text-gray-500 dark:text-gray-400" data-target="users-panel">
+                                        <i class="fas fa-users mr-2"></i> <span class="user-management-text">User Management</span>
+                                    </button>
+                                </li>
+                                <li class="mr-2">
+                                    <button class="admin-tab inline-block py-2 px-4 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 text-gray-500 dark:text-gray-400" data-target="system-logs-panel">
+                                        <i class="fas fa-clipboard-list mr-2"></i> <span class="system-logs-text">System Logs</span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Approval Panel -->
+                        <div id="approval-panel" class="admin-panel">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-medium pending-approvals-text">Pending Approvals</h3>
+                                    <div class="flex items-center">
+                                        <select class="bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-sm py-1 px-3 mr-2">
+                                            <option value="all" class="all-text">All Types</option>
+                                            <option value="leave" class="leave-request-text">Leave Requests</option>
+                                            <option value="shift" class="shift-swap-text">Shift Swaps</option>
+                                            <option value="overtime" class="overtime-text">Overtime</option>
+                                        </select>
+                                        <button class="bg-primary hover:bg-secondary text-white py-1 px-3 rounded-lg text-sm approve-all-text">
+                                            Approve All
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead>
+                                            <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                                <th class="pb-3 pr-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </th>
+                                                <th class="pb-3 request-text">Request</th>
+                                                <th class="pb-3 employee-text">Employee</th>
+                                                <th class="pb-3 department-text">Department</th>
+                                                <th class="pb-3 date-text">Date</th>
+                                                <th class="pb-3 submitted-text">Submitted</th>
+                                                <th class="pb-3 actions-text">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 pr-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+                                                            <i class="fas fa-calendar-alt"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-medium annual-leave-text">Annual Leave</div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400 vacation-text">Vacation</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">Sarah Chen</td>
+                                                <td class="py-3 text-sm">Marketing</td>
+                                                <td class="py-3 text-sm">May 22 - May 24, 2023</td>
+                                                <td class="py-3 text-sm">May 15, 2023</td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex space-x-2">
+                                                        <button class="p-1 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded approve-text" title="Approve">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded reject-text" title="Reject">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded" title="Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 pr-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400 mr-3">
+                                                            <i class="fas fa-exchange-alt"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-medium shift-swap-text">Shift Swap</div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">May 19 → May 21</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">Michael Li</td>
+                                                <td class="py-3 text-sm">Operations</td>
+                                                <td class="py-3 text-sm">May 19, 2023</td>
+                                                <td class="py-3 text-sm">May 14, 2023</td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex space-x-2">
+                                                        <button class="p-1 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded approve-text" title="Approve">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded reject-text" title="Reject">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded" title="Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 pr-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400 mr-3">
+                                                            <i class="fas fa-clock"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-medium overtime-request-text">Overtime Request</div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">2 hours</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">John Wong</td>
+                                                <td class="py-3 text-sm">IT</td>
+                                                <td class="py-3 text-sm">May 18, 2023</td>
+                                                <td class="py-3 text-sm">May 15, 2023</td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex space-x-2">
+                                                        <button class="p-1 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded approve-text" title="Approve">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded reject-text" title="Reject">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded" title="Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 pr-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+                                                            <i class="fas fa-calendar-alt"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-medium sick-leave-text">Sick Leave</div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400 doctor-appointment-text">Doctor Appointment</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">Emily Chow</td>
+                                                <td class="py-3 text-sm">Finance</td>
+                                                <td class="py-3 text-sm">May 20, 2023</td>
+                                                <td class="py-3 text-sm">May 16, 2023</td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex space-x-2">
+                                                        <button class="p-1 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded approve-text" title="Approve">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded reject-text" title="Reject">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded" title="Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 pr-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center text-red-600 dark:text-red-400 mr-3">
+                                                            <i class="fas fa-user-plus"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-medium new-employee-text">New Employee</div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400 account-setup-text">Account Setup</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">David Ng</td>
+                                                <td class="py-3 text-sm">Sales</td>
+                                                <td class="py-3 text-sm">May 22, 2023</td>
+                                                <td class="py-3 text-sm">May 16, 2023</td>
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex space-x-2">
+                                                        <button class="p-1 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded approve-text" title="Approve">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded reject-text" title="Reject">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded" title="Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Recent Approvals -->
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                                <h3 class="text-lg font-medium mb-4 recent-approvals-text">Recent Approvals</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead>
+                                            <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                                <th class="pb-3 request-text">Request</th>
+                                                <th class="pb-3 employee-text">Employee</th>
+                                                <th class="pb-3 date-text">Date</th>
+                                                <th class="pb-3 approved-by-text">Approved By</th>
+                                                <th class="pb-3 status-text">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+                                                            <i class="fas fa-calendar-alt"></i>
+                                                        </div>
+                                                        <span class="annual-leave-text">Annual Leave</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">Alex Wong</td>
+                                                <td class="py-3 text-sm">May 10 - May 12, 2023</td>
+                                                <td class="py-3 text-sm">Admin User</td>
+                                                <td class="py-3 text-sm">
+                                                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs approved-text">
+                                                        Approved
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400 mr-3">
+                                                            <i class="fas fa-exchange-alt"></i>
+                                                        </div>
+                                                        <span class="shift-swap-text">Shift Swap</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">Jessica Lee</td>
+                                                <td class="py-3 text-sm">May 8, 2023</td>
+                                                <td class="py-3 text-sm">Admin User</td>
+                                                <td class="py-3 text-sm">
+                                                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs approved-text">
+                                                        Approved
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+                                                            <i class="fas fa-calendar-alt"></i>
+                                                        </div>
+                                                        <span class="sick-leave-text">Sick Leave</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">Kevin Chan</td>
+                                                <td class="py-3 text-sm">May 5, 2023</td>
+                                                <td class="py-3 text-sm">Admin User</td>
+                                                <td class="py-3 text-sm">
+                                                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs approved-text">
+                                                        Approved
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Management Panel -->
+                        <div id="users-panel" class="admin-panel hidden">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium user-management-text">User Management</h3>
+                                <button class="bg-primary hover:bg-secondary text-white py-2 px-4 rounded-lg text-sm">
+                                    <i class="fas fa-plus mr-1"></i> <span class="add-new-user-text">Add New User</span>
+                                </button>
+                            </div>
+                            
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                                <div class="border-b border-gray-200 dark:border-gray-700 p-4 flex flex-wrap justify-between items-center">
+                                    <div class="flex items-center space-x-2 mb-2 sm:mb-0">
+                                        <div class="relative">
+                                            <input type="text" placeholder="Search users..." class="pl-8 pr-4 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg">
+                                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                        </div>
+                                        <select class="bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-sm py-2 px-3">
+                                            <option value="all" class="all-departments-text">All Departments</option>
+                                            <option value="hr">HR</option>
+                                            <option value="it">IT</option>
+                                            <option value="sales">Sales</option>
+                                            <option value="marketing">Marketing</option>
+                                            <option value="finance">Finance</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg text-sm export-users-text">
+                                            <i class="fas fa-download mr-1"></i> Export
+                                        </button>
+                                        <button class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg text-sm bulk-edit-text">
+                                            <i class="fas fa-edit mr-1"></i> Bulk Edit
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead>
+                                            <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                                <th class="px-4 py-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </th>
+                                                <th class="px-4 py-3 employee-text">Employee</th>
+                                                <th class="px-4 py-3 email-text">Email</th>
+                                                <th class="px-4 py-3 department-text">Department</th>
+                                                <th class="px-4 py-3 role-text">Role</th>
+                                                <th class="px-4 py-3 status-text">Status</th>
+                                                <th class="px-4 py-3 last-login-text">Last Login</th>
+                                                <th class="px-4 py-3 actions-text">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="px-4 py-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-2">
+                                                            <span>JW</span>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-medium">John Wong</div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">Employee ID: E1001</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-3 text-sm">john.wong@example.com</td>
+                                                <td class="px-4 py-3 text-sm">IT</td>
+                                                <td class="px-4 py-3 text-sm">Software Engineer</td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs active-text">
+                                                        Active
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3 text-sm">Today, 09:45 AM</td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <div class="flex items-center space-x-2">
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded edit-text" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded" title="Deactivate">
+                                                            <i class="fas fa-user-slash"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded" title="Permissions">
+                                                            <i class="fas fa-key"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="px-4 py-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400 mr-2">
+                                                            <span>SC</span>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-medium">Sarah Chen</div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">Employee ID: E1002</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-3 text-sm">sarah.chen@example.com</td>
+                                                <td class="px-4 py-3 text-sm">Marketing</td>
+                                                <td class="px-4 py-3 text-sm">Marketing Manager</td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs active-text">
+                                                        Active
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3 text-sm">Yesterday, 15:30 PM</td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <div class="flex items-center space-x-2">
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded edit-text" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded" title="Deactivate">
+                                                            <i class="fas fa-user-slash"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded" title="Permissions">
+                                                            <i class="fas fa-key"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="px-4 py-3">
+                                                    <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary dark:bg-gray-700">
+                                                </td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400 mr-2">
+                                                            <span>ML</span>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-medium">Michael Li</div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">Employee ID: E1003</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-3 text-sm">michael.li@example.com</td>
+                                                <td class="px-4 py-3 text-sm">Operations</td>
+                                                <td class="px-4 py-3 text-sm">Operations Manager</td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs active-text">
+                                                        Active
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3 text-sm">Today, 08:15 AM</td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <div class="flex items-center space-x-2">
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded edit-text" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded" title="Deactivate">
+                                                            <i class="fas fa-user-slash"></i>
+                                                        </button>
+                                                        <button class="p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded" title="Permissions">
+                                                            <i class="fas fa-key"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 showing-text">Showing 1-3 of 48 users</div>
+                                    <div class="flex items-center space-x-2">
+                                        <button class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded previous-text" title="Previous">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                        <button class="p-2 bg-primary hover:bg-secondary text-white rounded">
+                                            1
+                                        </button>
+                                        <button class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded">
+                                            2
+                                        </button>
+                                        <button class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded">
+                                            3
+                                        </button>
+                                        <button class="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded next-text" title="Next">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Logs Panel -->
+                        <div id="system-logs-panel" class="admin-panel hidden">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-medium system-logs-text">System Logs</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <select class="bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-sm py-2 px-3">
+                                            <option value="all" class="all-logs-text">All Logs</option>
+                                            <option value="login" class="login-logs-text">Login Logs</option>
+                                            <option value="data" class="data-sync-logs-text">Data Sync Logs</option>
+                                            <option value="error" class="error-logs-text">Error Logs</option>
+                                        </select>
+                                        <button class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-2 px-3 rounded-lg text-sm export-logs-text">
+                                            Export
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead>
+                                            <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                                <th class="pb-3 event-text">Event</th>
+                                                <th class="pb-3 user-text">User</th>
+                                                <th class="pb-3 ip-address-text">IP Address</th>
+                                                <th class="pb-3 timestamp-text">Timestamp</th>
+                                                <th class="pb-3 details-text">Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400 mr-3">
+                                                            <i class="fas fa-sync-alt"></i>
+                                                        </div>
+                                                        <span class="data-sync-text">Data Sync</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">System</td>
+                                                <td class="py-3 text-sm">192.168.1.1</td>
+                                                <td class="py-3 text-sm">Today, 10:32 AM</td>
+                                                <td class="py-3 text-sm">Google Sheets sync completed successfully. 152 records updated.</td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+                                                            <i class="fas fa-sign-in-alt"></i>
+                                                        </div>
+                                                        <span class="login-text">Login</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">Admin User</td>
+                                                <td class="py-3 text-sm">192.168.1.5</td>
+                                                <td class="py-3 text-sm">Today, 09:45 AM</td>
+                                                <td class="py-3 text-sm">Successful login from Chrome on MacOS.</td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center text-yellow-600 dark:text-yellow-400 mr-3">
+                                                            <i class="fas fa-user-edit"></i>
+                                                        </div>
+                                                        <span class="user-update-text">User Update</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">Admin User</td>
+                                                <td class="py-3 text-sm">192.168.1.5</td>
+                                                <td class="py-3 text-sm">Today, 09:30 AM</td>
+                                                <td class="py-3 text-sm">User profile updated for Sarah Chen (E1002).</td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center text-red-600 dark:text-red-400 mr-3">
+                                                            <i class="fas fa-exclamation-triangle"></i>
+                                                        </div>
+                                                        <span class="error-text">Error</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">System</td>
+                                                <td class="py-3 text-sm">192.168.1.1</td>
+                                                <td class="py-3 text-sm">Today, 08:15 AM</td>
+                                                <td class="py-3 text-sm">Failed to connect to Google Sheets API. Retry attempt successful.</td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400 mr-3">
+                                                            <i class="fas fa-sync-alt"></i>
+                                                        </div>
+                                                        <span class="data-sync-text">Data Sync</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 text-sm">System</td>
+                                                <td class="py-3 text-sm">192.168.1.1</td>
+                                                <td class="py-3 text-sm">Yesterday, 22:00 PM</td>
+                                                <td class="py-3 text-sm">Scheduled Google Sheets sync completed successfully. 145 records updated.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reports Page -->
+                    <div id="reports-page" class="page hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-2xl font-bold reports-title">Reports</h1>
+                            <div class="flex items-center space-x-2">
+                                <select class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm py-2 px-4">
+                                    <option value="may-2023">May 2023</option>
+                                    <option value="april-2023">April 2023</option>
+                                    <option value="march-2023">March 2023</option>
+                                </select>
+                                <button class="bg-primary hover:bg-secondary text-white py-2 px-4 rounded-lg text-sm export-report-text">
+                                    <i class="fas fa-download mr-1"></i> Export
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Report Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-sm text-gray-500 dark:text-gray-400 total-hours-text">Total Hours</h3>
+                                    <div class="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                                        <i class="fas fa-clock text-blue-600 dark:text-blue-400"></i>
+                                    </div>
+                                </div>
+                                <p class="text-2xl font-bold">7,842</p>
+                                <div class="flex items-center mt-1 text-sm">
+                                    <span class="text-green-500 mr-1"><i class="fas fa-arrow-up"></i> 3.2%</span>
+                                    <span class="text-gray-500 dark:text-gray-400 from-previous-text">from previous</span>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-sm text-gray-500 dark:text-gray-400 overtime-hours-text">Overtime Hours</h3>
+                                    <div class="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
+                                        <i class="fas fa-hourglass-half text-purple-600 dark:text-purple-400"></i>
+                                    </div>
+                                </div>
+                                <p class="text-2xl font-bold">126</p>
+                                <div class="flex items-center mt-1 text-sm">
+                                    <span class="text-green-500 mr-1"><i class="fas fa-arrow-down"></i> 5.1%</span>
+                                    <span class="text-gray-500 dark:text-gray-400 from-previous-text">from previous</span>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-sm text-gray-500 dark:text-gray-400 leave-days-text">Leave Days</h3>
+                                    <div class="bg-green-100 dark:bg-green-900 p-2 rounded-lg">
+                                        <i class="fas fa-calendar-day text-green-600 dark:text-green-400"></i>
+                                    </div>
+                                </div>
+                                <p class="text-2xl font-bold">87</p>
+                                <div class="flex items-center mt-1 text-sm">
+                                    <span class="text-red-500 mr-1"><i class="fas fa-arrow-up"></i> 12.4%</span>
+                                    <span class="text-gray-500 dark:text-gray-400 from-previous-text">from previous</span>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-sm text-gray-500 dark:text-gray-400 late-arrivals-text">Late Arrivals</h3>
+                                    <div class="bg-yellow-100 dark:bg-yellow-900 p-2 rounded-lg">
+                                        <i class="fas fa-exclamation-circle text-yellow-600 dark:text-yellow-400"></i>
+                                    </div>
+                                </div>
+                                <p class="text-2xl font-bold">32</p>
+                                <div class="flex items-center mt-1 text-sm">
+                                    <span class="text-green-500 mr-1"><i class="fas fa-arrow-down"></i> 8.5%</span>
+                                    <span class="text-gray-500 dark:text-gray-400 from-previous-text">from previous</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attendance Reports -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                                <h3 class="text-lg font-medium mb-4 attendance-by-department-text">Attendance by Department</h3>
+                                <canvas id="departmentChart" height="250"></canvas>
+                            </div>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                                <h3 class="text-lg font-medium mb-4 overtime-by-department-text">Overtime by Department</h3>
+                                <canvas id="overtimeChart" height="250"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Top Employees -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+                            <h3 class="text-lg font-medium mb-4 top-employees-text">Top Employees (By Hours)</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                            <th class="pb-3 employee-text">Employee</th>
+                                            <th class="pb-3 department-text">Department</th>
+                                            <th class="pb-3 position-text">Position</th>
+                                            <th class="pb-3 hours-text">Hours</th>
+                                            <th class="pb-3 punctuality-text">Punctuality</th>
+                                            <th class="pb-3 performance-text">Performance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">John Wong</td>
+                                            <td class="py-3 text-sm">IT</td>
+                                            <td class="py-3 text-sm">Software Engineer</td>
+                                            <td class="py-3 text-sm">172</td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex items-center">
+                                                    <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                                        <div class="bg-green-500 h-2 rounded-full" style="width: 98%"></div>
+                                                    </div>
+                                                    <span>98%</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex text-yellow-400">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">Sarah Chen</td>
+                                            <td class="py-3 text-sm">Marketing</td>
+                                            <td class="py-3 text-sm">Marketing Manager</td>
+                                            <td class="py-3 text-sm">168</td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex items-center">
+                                                    <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                                        <div class="bg-green-500 h-2 rounded-full" style="width: 95%"></div>
+                                                    </div>
+                                                    <span>95%</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex text-yellow-400">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star-half-alt"></i>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">Michael Li</td>
+                                            <td class="py-3 text-sm">Operations</td>
+                                            <td class="py-3 text-sm">Operations Manager</td>
+                                            <td class="py-3 text-sm">165</td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex items-center">
+                                                    <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                                        <div class="bg-green-500 h-2 rounded-full" style="width: 92%"></div>
+                                                    </div>
+                                                    <span>92%</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex text-yellow-400">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="far fa-star"></i>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">Jessica Lee</td>
+                                            <td class="py-3 text-sm">HR</td>
+                                            <td class="py-3 text-sm">HR Specialist</td>
+                                            <td class="py-3 text-sm">162</td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex items-center">
+                                                    <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                                        <div class="bg-green-500 h-2 rounded-full" style="width: 96%"></div>
+                                                    </div>
+                                                    <span>96%</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex text-yellow-400">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="far fa-star"></i>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">Kevin Chan</td>
+                                            <td class="py-3 text-sm">Finance</td>
+                                            <td class="py-3 text-sm">Financial Analyst</td>
+                                            <td class="py-3 text-sm">160</td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex items-center">
+                                                    <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                                        <div class="bg-green-500 h-2 rounded-full" style="width: 90%"></div>
+                                                    </div>
+                                                    <span>90%</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 text-sm">
+                                                <div class="flex text-yellow-400">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="far fa-star"></i>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Leave Report -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                            <h3 class="text-lg font-medium mb-4 leave-report-text">Leave Report</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <h4 class="text-sm font-medium mb-3 leave-by-type-text">Leave by Type</h4>
+                                    <canvas id="leaveTypeChart" height="200"></canvas>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium mb-3 leave-by-month-text">Leave by Month</h4>
+                                    <canvas id="leaveMonthChart" height="200"></canvas>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium mb-3 leave-by-department-text">Leave by Department</h4>
+                                    <canvas id="leaveDeptChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Integrations Page -->
+                    <div id="integrations-page" class="page hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-2xl font-bold integrations-title">Integrations</h1>
+                            <button class="bg-primary hover:bg-secondary text-white py-2 px-4 rounded-lg text-sm add-integration-text">
+                                <i class="fas fa-plus mr-1"></i> Add Integration
+                            </button>
+                        </div>
+
+                        <!-- Connected Services -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+                            <h3 class="text-lg font-medium mb-4 connected-services-text">Connected Services</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Google Sheets Integration -->
+                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/googlesheets.svg" class="w-10 h-10 dark:invert" alt="Google Sheets">
+                                        </div>
+                                        <div class="ml-4 flex-grow">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <h4 class="font-medium">Google Sheets</h4>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400 google-sheets-connected-text">Connected</p>
+                                                </div>
+                                                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs active-text">
+                                                    Active
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="mt-4">
+                                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-1 connected-sheet-text">Connected Sheet</div>
+                                                <div class="flex items-center text-sm">
+                                                    <i class="fas fa-table text-green-500 mr-2"></i>
+                                                    <span>HR Data Spreadsheet</span>
+                                                    <a href="https://docs.google.com/spreadsheets/d/1KwzB75si8-MqAyzcmFQSLrvmhdITtTwzCd_C_2s49qs/edit" target="_blank" class="ml-2 text-primary hover:text-secondary">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-4 grid grid-cols-3 gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                                <div>
+                                                    <div class="font-medium text-gray-800 dark:text-gray-200">1,254</div>
+                                                    <div class="text-xs records-synced-text">Records synced</div>
+                                                </div>
+                                                <div>
+                                                    <div class="font-medium text-gray-800 dark:text-gray-200">10:32 AM</div>
+                                                    <div class="text-xs last-sync-text">Last sync</div>
+                                                </div>
+                                                <div>
+                                                    <div class="font-medium text-gray-800 dark:text-gray-200 auto-sync-text">Auto Sync</div>
+                                                    <div class="text-xs">Every 30 min</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-4 flex space-x-2">
+                                                <button class="bg-primary hover:bg-secondary text-white py-1 px-3 rounded text-sm sync-now-text">
+                                                    Sync Now
+                                                </button>
+                                                <button class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-1 px-3 rounded text-sm configure-text">
+                                                    Configure
+                                                </button>
+                                                <button class="bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 py-1 px-3 rounded text-sm disconnect-text">
+                                                    Disconnect
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Google Calendar Integration -->
+                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/googlecalendar.svg" class="w-10 h-10 dark:invert" alt="Google Calendar">
+                                        </div>
+                                        <div class="ml-4 flex-grow">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <h4 class="font-medium">Google Calendar</h4>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400 google-calendar-connected-text">Connected</p>
+                                                </div>
+                                                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs active-text">
+                                                    Active
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="mt-4">
+                                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-1 connected-calendar-text">Connected Calendar</div>
+                                                <div class="flex items-center text-sm">
+                                                    <i class="fas fa-calendar text-blue-500 mr-2"></i>
+                                                    <span>HR Department Calendar</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-4 grid grid-cols-3 gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                                <div>
+                                                    <div class="font-medium text-gray-800 dark:text-gray-200">48</div>
+                                                    <div class="text-xs events-synced-text">Events synced</div>
+                                                </div>
+                                                <div>
+                                                    <div class="font-medium text-gray-800 dark:text-gray-200">09:45 AM</div>
+                                                    <div class="text-xs last-sync-text">Last sync</div>
+                                                </div>
+                                                <div>
+                                                    <div class="font-medium text-gray-800 dark:text-gray-200 auto-sync-text">Auto Sync</div>
+                                                    <div class="text-xs">Hourly</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-4 flex space-x-2">
+                                                <button class="bg-primary hover:bg-secondary text-white py-1 px-3 rounded text-sm sync-now-text">
+                                                    Sync Now
+                                                </button>
+                                                <button class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-1 px-3 rounded text-sm configure-text">
+                                                    Configure
+                                                </button>
+                                                <button class="bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 py-1 px-3 rounded text-sm disconnect-text">
+                                                    Disconnect
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Spreadsheet Configuration -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+                            <h3 class="text-lg font-medium mb-4 spreadsheet-configuration-text">Spreadsheet Configuration</h3>
+                            
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-medium data-mapping-text">Data Mapping</h4>
+                                    <button class="text-primary hover:text-secondary text-sm edit-mapping-text">Edit Mapping</button>
+                                </div>
+                                
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead>
+                                            <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                                <th class="pb-3 system-field-text">System Field</th>
+                                                <th class="pb-3 sheet-column-text">Sheet Column</th>
+                                                <th class="pb-3 data-type-text">Data Type</th>
+                                                <th class="pb-3 sync-direction-text">Sync Direction</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-2 text-sm">Employee ID</td>
+                                                <td class="py-2 text-sm">Column A</td>
+                                                <td class="py-2 text-sm">Text</td>
+                                                <td class="py-2 text-sm">
+                                                    <i class="fas fa-exchange-alt text-primary"></i>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-2 text-sm">Employee Name</td>
+                                                <td class="py-2 text-sm">Column B</td>
+                                                <td class="py-2 text-sm">Text</td>
+                                                <td class="py-2 text-sm">
+                                                    <i class="fas fa-exchange-alt text-primary"></i>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-2 text-sm">Department</td>
+                                                <td class="py-2 text-sm">Column C</td>
+                                                <td class="py-2 text-sm">Text</td>
+                                                <td class="py-2 text-sm">
+                                                    <i class="fas fa-exchange-alt text-primary"></i>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-2 text-sm">Clock In Time</td>
+                                                <td class="py-2 text-sm">Column D</td>
+                                                <td class="py-2 text-sm">Time</td>
+                                                <td class="py-2 text-sm">
+                                                    <i class="fas fa-arrow-right text-green-500"></i>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                                <td class="py-2 text-sm">Clock Out Time</td>
+                                                <td class="py-2 text-sm">Column E</td>
+                                                <td class="py-2 text-sm">Time</td>
+                                                <td class="py-2 text-sm">
+                                                    <i class="fas fa-arrow-right text-green-500"></i>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-medium sync-settings-text">Sync Settings</h4>
+                                    <button class="text-primary hover:text-secondary text-sm edit-settings-text">Edit Settings</button>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                                        <h5 class="text-sm font-medium mb-2 sync-frequency-text">Sync Frequency</h5>
+                                        <div class="flex items-center space-x-2">
+                                            <select class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-sm py-1 px-2">
+                                                <option value="5">Every 5 minutes</option>
+                                                <option value="15">Every 15 minutes</option>
+                                                <option value="30" selected="">Every 30 minutes</option>
+                                                <option value="60">Every hour</option>
+                                                <option value="manual">Manual only</option>
+                                            </select>
+                                            <button class="bg-primary hover:bg-secondary text-white py-1 px-3 rounded text-sm save-text">
+                                                Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                                        <h5 class="text-sm font-medium mb-2 conflict-resolution-text">Conflict Resolution</h5>
+                                        <select class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-sm py-1 px-2 w-full">
+                                            <option value="system" selected="" class="system-wins-text">System wins</option>
+                                            <option value="sheet" class="sheet-wins-text">Sheet wins</option>
+                                            <option value="newest" class="newest-wins-text">Newest wins</option>
+                                            <option value="manual" class="manual-resolve-text">Manual resolution</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Connection History -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium sync-history-text">Sync History</h3>
+                                <button class="text-primary hover:text-secondary text-sm view-all-logs-text">View All Logs</button>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                            <th class="pb-3 timestamp-text">Timestamp</th>
+                                            <th class="pb-3 service-text">Service</th>
+                                            <th class="pb-3 status-text">Status</th>
+                                            <th class="pb-3 records-text">Records</th>
+                                            <th class="pb-3 duration-text">Duration</th>
+                                            <th class="pb-3 details-text">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">Today, 10:32 AM</td>
+                                            <td class="py-3 text-sm">Google Sheets</td>
+                                            <td class="py-3 text-sm">
+                                                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs success-text">
+                                                    Success
+                                                </span>
+                                            </td>
+                                            <td class="py-3 text-sm">152 updated</td>
+                                            <td class="py-3 text-sm">12s</td>
+                                            <td class="py-3 text-sm">
+                                                <button class="text-primary hover:text-secondary">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">Today, 10:00 AM</td>
+                                            <td class="py-3 text-sm">Google Calendar</td>
+                                            <td class="py-3 text-sm">
+                                                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs success-text">
+                                                    Success
+                                                </span>
+                                            </td>
+                                            <td class="py-3 text-sm">5 updated</td>
+                                            <td class="py-3 text-sm">3s</td>
+                                            <td class="py-3 text-sm">
+                                                <button class="text-primary hover:text-secondary">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">Today, 09:30 AM</td>
+                                            <td class="py-3 text-sm">Google Sheets</td>
+                                            <td class="py-3 text-sm">
+                                                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs success-text">
+                                                    Success
+                                                </span>
+                                            </td>
+                                            <td class="py-3 text-sm">152 updated</td>
+                                            <td class="py-3 text-sm">11s</td>
+                                            <td class="py-3 text-sm">
+                                                <button class="text-primary hover:text-secondary">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">Today, 09:00 AM</td>
+                                            <td class="py-3 text-sm">Google Calendar</td>
+                                            <td class="py-3 text-sm">
+                                                <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-xs success-text">
+                                                    Success
+                                                </span>
+                                            </td>
+                                            <td class="py-3 text-sm">5 updated</td>
+                                            <td class="py-3 text-sm">3s</td>
+                                            <td class="py-3 text-sm">
+                                                <button class="text-primary hover:text-secondary">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="py-3 text-sm">Today, 08:30 AM</td>
+                                            <td class="py-3 text-sm">Google Sheets</td>
+                                            <td class="py-3 text-sm">
+                                                <span class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 rounded-full text-xs error-text">
+                                                    Error
+                                                </span>
+                                            </td>
+                                            <td class="py-3 text-sm">0 updated</td>
+                                            <td class="py-3 text-sm">5s</td>
+                                            <td class="py-3 text-sm">
+                                                <button class="text-primary hover:text-secondary">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Current date display
+        function updateDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString(undefined, options);
+            
+            // Update admin date if it exists
+            const adminDate = document.getElementById('admin-date');
+            if (adminDate) {
+                adminDate.textContent = now.toLocaleDateString(undefined, options);
+            }
+        }
+        
+        updateDate();
+        setInterval(updateDate, 1000);
+
+        // Navigation
+        const pages = document.querySelectorAll('.page');
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                const targetPage = this.getAttribute('data-page');
+                
+                // Remove active class from all links
+                navLinks.forEach(link => {
+                    link.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-primary');
+                });
+                
+                // Add active class to clicked link
+                this.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-primary');
+                
+                // Hide all pages
+                pages.forEach(page => {
+                    page.classList.add('hidden');
+                });
+                
+                // Show target page with animation
+                const targetPageElement = document.getElementById(`${targetPage}-page`);
+                targetPageElement.classList.remove('hidden');
+                targetPageElement.classList.add('fade-in');
+                
+                // Close sidebar on mobile
+                if (window.innerWidth < 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        
+        function toggleSidebar() {
+            sidebar.classList.toggle('hidden');
+            sidebarOverlay.classList.toggle('hidden');
+            if (!sidebar.classList.contains('hidden')) {
+                sidebar.classList.add('slide-in');
+            }
+        }
+        
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // User dropdown toggle
+        const userMenu = document.getElementById('user-menu');
+        const userDropdown = document.getElementById('user-dropdown');
+        
+        userMenu.addEventListener('click', function() {
+            userDropdown.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('#user-menu-container')) {
+                userDropdown.classList.add('hidden');
+            }
+        });
+
+        // Admin panel tabs
+        const adminTabs = document.querySelectorAll('.admin-tab');
+        const adminPanels = document.querySelectorAll('.admin-panel');
+        
+        adminTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const target = this.getAttribute('data-target');
+                
+                // Remove active class from all tabs
+                adminTabs.forEach(tab => {
+                    tab.classList.remove('border-primary', 'text-primary');
+                    tab.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400', 'hover:border-gray-300', 'dark:hover:border-gray-600');
+                });
+                
+                // Add active class to clicked tab
+                this.classList.add('border-primary', 'text-primary');
+                this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400', 'hover:border-gray-300', 'dark:hover:border-gray-600');
+                
+                // Hide all panels
+                adminPanels.forEach(panel => {
+                    panel.classList.add('hidden');
+                });
+                
+                // Show target panel
+                document.getElementById(target).classList.remove('hidden');
+            });
+        });
+
+        // Language toggle
+        const languageToggle = document.getElementById('language-toggle');
+        const currentLang = document.getElementById('current-lang');
+        let isEnglish = true;
+        
+        languageToggle.addEventListener('click', function() {
+            isEnglish = !isEnglish;
+            currentLang.textContent = isEnglish ? "EN" : "中";
+            updateLanguage(isEnglish ? "en" : "zh");
+        });
+
+        // Chart Initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize attendance chart
+            const attendanceCtx = document.getElementById('attendanceChart');
+            if (attendanceCtx) {
+                new Chart(attendanceCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Check-ins',
+                            data: [45, 47, 48, 46, 43, 15, 12],
+                            borderColor: '#5D5CDE',
+                            backgroundColor: 'rgba(93, 92, 222, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: document.documentElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Initialize leave chart
+            const leaveCtx = document.getElementById('leaveChart');
+            if (leaveCtx) {
+                new Chart(leaveCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Annual Leave', 'Sick Leave', 'Personal Leave', 'Other'],
+                        datasets: [{
+                            data: [35, 20, 15, 5],
+                            backgroundColor: [
+                                '#5D5CDE',
+                                '#10B981',
+                                '#F59E0B',
+                                '#6B7280'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#333'
+                                }
+                            }
+                        },
+                        cutout: '70%'
+                    }
+                });
+            }
+
+            // Department attendance chart
+            const deptCtx = document.getElementById('departmentChart');
+            if (deptCtx) {
+                new Chart(deptCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['IT', 'Sales', 'Marketing', 'Finance', 'HR', 'Operations'],
+                        datasets: [{
+                            label: 'Attendance Rate (%)',
+                            data: [98, 92, 95, 97, 99, 94],
+                            backgroundColor: '#5D5CDE'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: {
+                                    color: document.documentElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Overtime by department chart
+            const overtimeCtx = document.getElementById('overtimeChart');
+            if (overtimeCtx) {
+                new Chart(overtimeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['IT', 'Sales', 'Marketing', 'Finance', 'HR', 'Operations'],
+                        datasets: [{
+                            label: 'Overtime Hours',
+                            data: [28, 42, 15, 10, 8, 23],
+                            backgroundColor: '#F59E0B'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: document.documentElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Leave charts for reports page
+            const chartIds = ['leaveTypeChart', 'leaveMonthChart', 'leaveDeptChart'];
+            const chartData = [
+                {
+                    type: 'pie',
+                    labels: ['Annual', 'Sick', 'Personal', 'Other'],
+                    data: [60, 20, 15, 5],
+                    colors: ['#3B82F6', '#EF4444', '#10B981', '#6B7280']
+                },
+                {
+                    type: 'bar',
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    data: [12, 19, 15, 18, 22],
+                    colors: '#5D5CDE'
+                },
+                {
+                    type: 'pie',
+                    labels: ['IT', 'Sales', 'Marketing', 'Finance', 'HR'],
+                    data: [25, 20, 15, 15, 10],
+                    colors: ['#3B82F6', '#F59E0B', '#EC4899', '#10B981', '#6B7280']
+                }
+            ];
+
+            chartIds.forEach((id, index) => {
+                const ctx = document.getElementById(id);
+                if (ctx) {
+                    const chartConfig = {
+                        type: chartData[index].type,
+                        data: {
+                            labels: chartData[index].labels,
+                            datasets: [{
+                                data: chartData[index].data,
+                                backgroundColor: chartData[index].colors
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 10,
+                                        color: document.documentElement.classList.contains('dark') ? '#fff' : '#333',
+                                        font: {
+                                            size: 10
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    if (chartData[index].type === 'bar') {
+                        chartConfig.options.scales = {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: document.documentElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        };
+                    }
+
+                    new Chart(ctx, chartConfig);
+                }
+            });
+        });
+
+        // Simulate Google Sheets API functionality
+        class GoogleSheetsAPI {
+            constructor(spreadsheetId) {
+                this.spreadsheetId = spreadsheetId;
+                this.isConnected = true;
+                this.lastSync = new Date();
+                this.recordsSynced = 1254;
+                this.syncInterval = 30; // minutes
+            }
+
+            async sync() {
+                return new Promise((resolve, reject) => {
+                    // Simulate API call delay
+                    setTimeout(() => {
+                        if (Math.random() > 0.1) { // 90% success rate
+                            this.lastSync = new Date();
+                            this.recordsSynced += Math.floor(Math.random() * 10);
+                            document.getElementById('sync-status').classList.remove('hidden');
+                            showToast('Synced with Google Sheets successfully!');
+                            resolve({
+                                success: true,
+                                recordsSynced: this.recordsSynced,
+                                timestamp: this.lastSync
+                            });
+                        } else {
+                            reject(new Error('Failed to sync with Google Sheets'));
+                        }
+                    }, 1500);
+                });
+            }
+
+            getLastSync() {
+                return this.lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            getRecordsSynced() {
+                return this.recordsSynced;
+            }
+        }
+
+        // Initialize Google Sheets API
+        const sheetsAPI = new GoogleSheetsAPI('1KwzB75si8-MqAyzcmFQSLrvmhdITtTwzCd_C_2s49qs');
+
+        // Set up sync button event listeners
+        const syncButtons = document.querySelectorAll('.sync-now-text');
+        syncButtons.forEach(button => {
+            button.addEventListener('click', async function() {
+                const originalText = this.textContent;
+                this.textContent = 'Syncing...';
+                this.disabled = true;
+                
+                try {
+                    await sheetsAPI.sync();
+                    this.textContent = originalText;
+                    this.disabled = false;
+                    
+                    // Update displayed sync time
+                    const lastSyncElements = document.querySelectorAll('.last-sync-text');
+                    lastSyncElements.forEach(element => {
+                        const parentDiv = element.parentElement;
+                        const timeDisplay = parentDiv.querySelector('.font-medium');
+                        if (timeDisplay) {
+                            timeDisplay.textContent = sheetsAPI.getLastSync();
+                        }
+                    });
+                } catch (error) {
+                    showToast('Sync failed: ' + error.message, 'error');
+                    this.textContent = originalText;
+                    this.disabled = false;
+                }
+            });
+        });
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            // Create toast element
+            const toast = document.createElement('div');
+            
+            if (type === 'success') {
+                toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white text-sm py-2 px-4 rounded-lg shadow-lg z-50 opacity-0 transition-opacity duration-300';
+            } else {
+                toast.className = 'fixed bottom-4 right-4 bg-red-600 text-white text-sm py-2 px-4 rounded-lg shadow-lg z-50 opacity-0 transition-opacity duration-300';
+            }
+            
+            toast.textContent = message;
+            
+            // Add to document
+            document.body.appendChild(toast);
+            
+            // Fade in
+            setTimeout(() => {
+                toast.classList.replace('opacity-0', 'opacity-100');
+            }, 10);
+            
+            // Fade out and remove
+            setTimeout(() => {
+                toast.classList.replace('opacity-100', 'opacity-0');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Text translations
+        const translations = {
+            // Navigation
+            "dashboard-text": { en: "Dashboard", zh: "儀表板" },
+            "attendance-text": { en: "Attendance", zh: "出勤管理" },
+            "leave-text": { en: "Leave Management", zh: "假期管理" },
+            "scheduling-text": { en: "Scheduling", zh: "排班管理" },
+            "reports-text": { en: "Reports", zh: "報表" },
+            "integrations-text": { en: "Integrations", zh: "整合" },
+            "admin-text": { en: "Admin Panel", zh: "管理員面板" },
+            
+            // Header and User Menu
+            "synced-text": { en: "Synced with Google Sheets", zh: "已與 Google Sheets 同步" },
+            "admin-name": { en: "Admin User", zh: "管理員" },
+            "user-profile": { en: "Profile", zh: "個人資料" },
+            "user-settings": { en: "Settings", zh: "設置" },
+            "user-logout": { en: "Logout", zh: "登出" },
+            
+            // Dashboard
+            "dashboard-title": { en: "Dashboard", zh: "儀表板" },
+            "employees-text": { en: "Employees", zh: "員工" },
+            "attendance-rate-text": { en: "Attendance Rate", zh: "出勤率" },
+            "pending-requests-text": { en: "Pending Requests", zh: "待處理請求" },
+            "overtime-hours-text": { en: "Overtime Hours", zh: "加班時數" },
+            "since-last-month-text": { en: "since last month", zh: "自上個月以來" },
+            "since-yesterday-text": { en: "since yesterday", zh: "自昨天以來" },
+            "attendance-overview-text": { en: "Attendance Overview", zh: "出勤概覽" },
+            "this-week-text": { en: "This Week", zh: "本週" },
+            "this-month-text": { en: "This Month", zh: "本月" },
+            "this-quarter-text": { en: "This Quarter", zh: "本季度" },
+            "leave-distribution-text": { en: "Leave Distribution", zh: "假期分佈" },
+            "pending-approvals-text": { en: "Pending Approvals", zh: "待審批項目" },
+            "view-all-text": { en: "View All", zh: "查看全部" },
+            "request-type-text": { en: "Request Type", zh: "請求類型" },
+            "employee-text": { en: "Employee", zh: "員工" },
+            "date-text": { en: "Date", zh: "日期" },
+            "status-text": { en: "Status", zh: "狀態" },
+            "actions-text": { en: "Actions", zh: "操作" },
+            "leave-request-text": { en: "Leave Request", zh: "請假申請" },
+            "shift-swap-text": { en: "Shift Swap", zh: "調班" },
+            "overtime-request-text": { en: "Overtime Request", zh: "加班申請" },
+            "pending-text": { en: "Pending", zh: "待處理" },
+            "approved-text": { en: "Approved", zh: "已批准" },
+            "data-integration-text": { en: "Data Integration", zh: "數據整合" },
+            "sheets-sync-status-text": { en: "Google Sheets synchronization is active and working correctly.", zh: "Google Sheets 同步已啟用並正常運行。" },
+            "last-sync-text": { en: "Last Sync", zh: "上次同步" },
+            "sync-records-text": { en: "Records Synced", zh: "已同步記錄" },
+            "sync-status-text": { en: "Status", zh: "狀態" },
+            "active-text": { en: "Active", zh: "啟用" },
+            "sync-now-text": { en: "Sync Now", zh: "立即同步" },
+            "view-data-text": { en: "View Data", zh: "查看數據" },
+            
+            // Admin Panel
+            "admin-panel-text": { en: "Admin Panel", zh: "管理員面板" },
+            "approvals-text": { en: "Approvals", zh: "審批" },
+            "user-management-text": { en: "User Management", zh: "用戶管理" },
+            "system-logs-text": { en: "System Logs", zh: "系統日誌" },
+            "all-text": { en: "All Types", zh: "所有類型" },
+            "approve-all-text": { en: "Approve All", zh: "全部批准" },
+            "request-text": { en: "Request", zh: "請求" },
+            "department-text": { en: "Department", zh: "部門" },
+            "submitted-text": { en: "Submitted", zh: "提交日期" },
+            "annual-leave-text": { en: "Annual Leave", zh: "年假" },
+            "vacation-text": { en: "Vacation", zh: "假期" },
+            "sick-leave-text": { en: "Sick Leave", zh: "病假" },
+            "doctor-appointment-text": { en: "Doctor Appointment", zh: "醫生預約" },
+            "approve-text": { en: "Approve", zh: "批准" },
+            "reject-text": { en: "Reject", zh: "拒絕" },
+            "recent-approvals-text": { en: "Recent Approvals", zh: "最近審批" },
+            "approved-by-text": { en: "Approved By", zh: "審批人" },
+            "add-new-user-text": { en: "Add New User", zh: "新增用戶" },
+            "all-departments-text": { en: "All Departments", zh: "所有部門" },
+            "export-users-text": { en: "Export", zh: "匯出" },
+            "bulk-edit-text": { en: "Bulk Edit", zh: "批量編輯" },
+            "email-text": { en: "Email", zh: "電子郵件" },
+            "role-text": { en: "Role", zh: "職位" },
+            "last-login-text": { en: "Last Login", zh: "上次登入" },
+            "edit-text": { en: "Edit", zh: "編輯" },
+            "showing-text": { en: "Showing 1-3 of 48 users", zh: "顯示 1-3 / 48 名用戶" },
+            "previous-text": { en: "Previous", zh: "上一頁" },
+            "next-text": { en: "Next", zh: "下一頁" },
+            "all-logs-text": { en: "All Logs", zh: "所有日誌" },
+            "login-logs-text": { en: "Login Logs", zh: "登入日誌" },
+            "data-sync-logs-text": { en: "Data Sync Logs", zh: "數據同步日誌" },
+            "error-logs-text": { en: "Error Logs", zh: "錯誤日誌" },
+            "export-logs-text": { en: "Export", zh: "匯出" },
+            "event-text": { en: "Event", zh: "事件" },
+            "user-text": { en: "User", zh: "用戶" },
+            "ip-address-text": { en: "IP Address", zh: "IP 地址" },
+            "timestamp-text": { en: "Timestamp", zh: "時間戳" },
+            "details-text": { en: "Details", zh: "詳情" },
+            "data-sync-text": { en: "Data Sync", zh: "數據同步" },
+            "login-text": { en: "Login", zh: "登入" },
+            "user-update-text": { en: "User Update", zh: "用戶更新" },
+            "error-text": { en: "Error", zh: "錯誤" },
+            "new-employee-text": { en: "New Employee", zh: "新員工" },
+            "account-setup-text": { en: "Account Setup", zh: "帳戶設置" },
+            
+            // Reports Page
+            "reports-title": { en: "Reports", zh: "報表" },
+            "export-report-text": { en: "Export", zh: "匯出" },
+            "total-hours-text": { en: "Total Hours", zh: "總工時" },
+            "leave-days-text": { en: "Leave Days", zh: "請假天數" },
+            "late-arrivals-text": { en: "Late Arrivals", zh: "遲到次數" },
+            "from-previous-text": { en: "from previous", zh: "較先前" },
+            "attendance-by-department-text": { en: "Attendance by Department", zh: "各部門出勤情況" },
+            "overtime-by-department-text": { en: "Overtime by Department", zh: "各部門加班情況" },
+            "top-employees-text": { en: "Top Employees (By Hours)", zh: "頂尖員工（按工時）" },
+            "position-text": { en: "Position", zh: "職位" },
+            "hours-text": { en: "Hours", zh: "工時" },
+            "punctuality-text": { en: "Punctuality", zh: "準時率" },
+            "performance-text": { en: "Performance", zh: "表現" },
+            "leave-report-text": { en: "Leave Report", zh: "請假報告" },
+            "leave-by-type-text": { en: "Leave by Type", zh: "按類型劃分請假" },
+            "leave-by-month-text": { en: "Leave by Month", zh: "按月份劃分請假" },
+            "leave-by-department-text": { en: "Leave by Department", zh: "按部門劃分請假" },
+            
+            // Integrations Page
+            "integrations-title": { en: "Integrations", zh: "整合" },
+            "add-integration-text": { en: "Add Integration", zh: "新增整合" },
+            "connected-services-text": { en: "Connected Services", zh: "已連接服務" },
+            "google-sheets-connected-text": { en: "Connected", zh: "已連接" },
+            "google-calendar-connected-text": { en: "Connected", zh: "已連接" },
+            "connected-sheet-text": { en: "Connected Sheet", zh: "已連接試算表" },
+            "connected-calendar-text": { en: "Connected Calendar", zh: "已連接日曆" },
+            "records-synced-text": { en: "Records synced", zh: "已同步記錄" },
+            "events-synced-text": { en: "Events synced", zh: "已同步事件" },
+            "auto-sync-text": { en: "Auto Sync", zh: "自動同步" },
+            "configure-text": { en: "Configure", zh: "設定" },
+            "disconnect-text": { en: "Disconnect", zh: "斷開連接" },
+            "spreadsheet-configuration-text": { en: "Spreadsheet Configuration", zh: "試算表設定" },
+            "data-mapping-text": { en: "Data Mapping", zh: "數據映射" },
+            "edit-mapping-text": { en: "Edit Mapping", zh: "編輯映射" },
+            "system-field-text": { en: "System Field", zh: "系統欄位" },
+            "sheet-column-text": { en: "Sheet Column", zh: "試算表欄位" },
+            "data-type-text": { en: "Data Type", zh: "數據類型" },
+            "sync-direction-text": { en: "Sync Direction", zh: "同步方向" },
+            "sync-settings-text": { en: "Sync Settings", zh: "同步設定" },
+            "edit-settings-text": { en: "Edit Settings", zh: "編輯設定" },
+            "sync-frequency-text": { en: "Sync Frequency", zh: "同步頻率" },
+            "conflict-resolution-text": { en: "Conflict Resolution", zh: "衝突解決" },
+            "system-wins-text": { en: "System wins", zh: "系統優先" },
+            "sheet-wins-text": { en: "Sheet wins", zh: "試算表優先" },
+            "newest-wins-text": { en: "Newest wins", zh: "最新優先" },
+            "manual-resolve-text": { en: "Manual resolution", zh: "手動解決" },
+            "save-text": { en: "Save", zh: "保存" },
+            "sync-history-text": { en: "Sync History", zh: "同步歷史" },
+            "view-all-logs-text": { en: "View All Logs", zh: "查看所有日誌" },
+            "service-text": { en: "Service", zh: "服務" },
+            "records-text": { en: "Records", zh: "記錄" },
+            "duration-text": { en: "Duration", zh: "耗時" },
+            "success-text": { en: "Success", zh: "成功" }
+        };
+
+        function updateLanguage(toLang) {
+            for (const [className, translations] of Object.entries(translations)) {
+                const elements = document.getElementsByClassName(className);
+                if (elements.length > 0) {
+                    for (const element of elements) {
+                        element.textContent = translations[toLang];
+                    }
+                }
+            }
+        }
+
+        // Auto-sync with Google Sheets every 30 seconds (for demo)
+        setInterval(async () => {
+            try {
+                await sheetsAPI.sync();
+            } catch (error) {
+                console.error('Auto-sync failed:', error);
+            }
+        }, 30000);
+    </script>
+
+
+</body></html>
